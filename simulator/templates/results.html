@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+          <div class="col" id="canvasspace">
+            <canvas id="totalcanvas" class="canvas" height="100" style="border:1px solid #000000; border-radius: 10px;">
+            </canvas> 
+          </div>
+        </div>
+    </div>
+
+    <script>
+        // set canvas width for all
+        var width = document.getElementById("canvasspace").offsetWidth - 24; // get div width, substract 12 padding per side
+        var canvas = document.getElementsByClassName("canvas");
+        for (var i = 0; i < canvas.length; i++)
+        {
+            canvas[i].width = width;
+        }
+        
+    </script>
+<script>
+    // get primer positions
+    var forward_primer_starts = [];
+    var reverse_primer_ends = [];
+</script>
+{% for item in annealed_primer %}
+{% if item.primer.direction %}
+
+<script>
+    forward_primer_starts.push({{ item.start }});
+</script>
+
+{% else %}
+
+<script>
+    reverse_primer_ends.push({{ item.end }});
+</script>
+
+{% endif %}
+{% endfor %}
+<script>
+
+function draw_triangle(direction, xposition, yposition)
+{
+    var fill_color = "#0099ff";
+    var nose_xposition = xposition + 10;
+    if (!direction)
+    {
+        nose_xposition = xposition - 10;
+        fill_color = "#ff0000";
+    }
+        // triangle
+        ctx.beginPath();
+        ctx.moveTo(xposition, yposition);
+        ctx.lineTo(xposition, yposition-10);
+        ctx.lineTo(nose_xposition, yposition-5);
+        ctx.closePath();
+        // the outline
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#000000';
+        ctx.stroke();
+        // the fill color
+        ctx.fillStyle = fill_color;
+        ctx.fill();  
+}
+
+</script>
+<script>
+// to be given by DB:
+    var seq_len = "{{ sequence }}".length;
+    var step = (width - 40) / seq_len // - 40 for border offset
+    
+    var c = document.getElementById("totalcanvas");
+    var ctx = c.getContext("2d");
+    
+    // horizontal line
+        ctx.beginPath();
+        ctx.moveTo(20, 50);
+        ctx.lineTo(width - 20, 50);
+        ctx.closePath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#000000';
+        ctx.stroke();
+    // numbers and legend
+        ctx.font = "16px Arial";
+        ctx.fillText("0", 5, 55);
+        ctx.fillText("forward primer        reverse primer", 25, 95);
+        draw_triangle(true, 10, 95)
+        draw_triangle(false, 160, 95)
+
+        // align number according to seq_len
+        ctx.fillStyle = "#000000";
+        if (seq_len < 10)
+            {ctx.fillText(seq_len, width-15, 55);}
+        else
+        {
+            ctx.save();
+            ctx.translate( 0, 0 );
+            ctx.rotate( Math.PI / 2);
+            
+            if (seq_len < 100)
+                {ctx.fillText(seq_len, 40, 15-width);}
+            else if (seq_len < 1000)
+                {ctx.fillText(seq_len, 35, 15-width);}
+            else if (seq_len < 10000)
+                {ctx.fillText(seq_len, 30, 15-width);}
+            else if (seq_len < 100000)
+                {ctx.fillText(seq_len, 25, 15-width);}
+            else if (seq_len < 1000000)
+                {ctx.fillText(seq_len, 20, 15-width);}
+            else if (seq_len < 10000000)
+                {ctx.fillText(seq_len, 15, 15-width);}
+            else
+                {ctx.fillText(seq_len, 10, 15-width);}
+
+            ctx.restore();
+        }
+
+    for (var i = 0; i < forward_primer_starts.length; i++)
+    {
+        triangleposition = forward_primer_starts[i] * step + 20; // 20 offset 
+        draw_triangle(true, triangleposition, 50);        
+    }
+    for (var i = 0; i < reverse_primer_ends.length; i++)
+    {
+        triangleposition = (reverse_primer_ends[i]+1) * step + 20; // 20 offset
+        draw_triangle(false, triangleposition, 60);  
+    }
+</script>
+<br>
+<div class="container">
+{% for item in result_string %}
+
+{{ item.product_string | safe}}
+
+{% endfor %}
+</div>
+{% endblock %}

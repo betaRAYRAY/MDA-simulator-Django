@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<!-- sequence input -->
+<div class="container">
+    <div class="row">
+      <div class="col">
+        <h5>sequence:</h5>
+        <textarea placeholder=">sequence&#10;AGTC" name="sequence" id="sequence" style="width:100%;" rows="3">{% for item in sequence_db %}{{item.name}}
+{{item.sequence}}{% endfor %}</textarea>
+      </div>
+      <div class="col">
+          <br>
+        or read file: <form method="POST" enctype="multipart/form-data" accept=".fasta"> {% csrf_token %} <input type="file" name="sequence_file"> <input type="submit" value="submit file"></form>
+      </div>
+    </div>
+
+    <br>
+
+<!-- primer input -->
+    <div class="row">
+        <div class="col">
+            <h5>primers:</h5>
+            <textarea placeholder=">primer1&#10;AGTC&#10;..." name="primer" id="primer" style="width:100%;" rows="3">{% for item in primer_db %}{% if item.direction %}{{item.name}}
+{{item.sequence}}
+{% endif %}{% endfor %}</textarea>
+        </div>
+        <div class="col">
+          <br>
+            or read file: <form method="POST" enctype="multipart/form-data" accept=".fasta"> {% csrf_token %} <input type="file" name="primer_file"> <input type="submit" value="submit file"></form>
+            <br>
+            <form method="POST">
+            {% csrf_token %}
+            <input type="submit", value="or use covid primers", name="covid">
+            </form> 
+        </div>
+    </div>
+    <br>
+
+    <!-- fetch textarea content-->
+    <form method="POST">
+    {% csrf_token %}
+    <input type="hidden" id="seq_h" name="seq_h" value="">
+    <input type="hidden" id="pri_h" name="pri_h" value="">
+
+    <script>
+    function read_textarea() 
+    {
+        var seq_val = document.getElementById('sequence').value;
+        var pri_val = document.getElementById('primer').value;
+    
+        document.getElementById('seq_h').value = seq_val;
+        document.getElementById('pri_h').value = pri_val;
+    }
+    </script>
+
+    <input type="submit", value="submit sequence and primers" onclick="read_textarea()"> 
+
+    </form> 
+  </div>
+
+<hr>
+
+<form method="POST" id="setting_form">
+    {% csrf_token %}
+
+<!-- settings -->
+    <div class="container">
+    <h5>settings:</h5>
+    <label>number of produced products:</label>
+    <input type="number" name="number_of_products" id="number_of_products" value="0" min="0" step="1">
+    &nbsp;
+    <input type="checkbox" name="number_of_products_EACHONCE" id="number_of_products_EACHONCE">
+    <label>produce each possible primer product once</label>
+<br><br>
+    <label>global termination probability:</label>
+    <span class="valuePadding"><input type="number" name="global_termination_probability" id="global_termination_probability" value="0" min="0" max="100" step="0.001">%</span>
+<br><br>
+    <label>local termination probability:</label>
+    <span class="valuePadding"><input type="number" name="local_termination_probability" id="local_termination_probability" value="0" min="0" max="100" step="0.001">%</span>
+<br><br>
+    <label>chimerism model:</label>
+    <select name="chimerism_model" id="chimerism_model">
+        <option value="no_model">---------</option>
+        <option value="A">model A</option>
+        <option value="B">model B</option>
+        <option value="C">model C</option>
+      </select>
+<br><br>
+    <label>chimerism probability:</label>
+    <span class="valuePadding"><input type="number" name="chimerism_probability" id="chimerism_probability" value="0" min="0" max="100" step="0.001">%</span>
+    </div>
+
+    {% for setting in setting_db %}
+    <script>  
+        function preset_settings(n_o_p, n_o_p_E, g_t_p, l_t_p, c_m, c_p) // full names see lines below
+        {
+            document.getElementById("number_of_products").value = n_o_p;
+            document.getElementById("number_of_products_EACHONCE").checked = n_o_p_E;
+            document.getElementById("global_termination_probability").value = g_t_p;
+            document.getElementById("local_termination_probability").value = l_t_p;
+            document.getElementById("chimerism_model").value = c_m;
+            document.getElementById("chimerism_probability").value = c_p;
+        }
+    </script>
+     <script>
+        var n_o_p_E = false;
+    </script>
+    {% if setting.number_of_products_EACHONCE %}
+        <script>
+            n_o_p_E = true;
+        </script>
+    {% endif %}
+    <script>
+        var n_o_p = {{ setting.number_of_products }};
+        // n_o_p_E already declared
+        var g_t_p =  {{ setting.global_termination_probability }};
+        var l_t_p = {{ setting.local_termination_probability }};
+        var c_m = "{{ setting.chimerism_model }}";
+        var c_p = {{ setting.chimerism_probability }};
+    
+        preset_settings(n_o_p, n_o_p_E, g_t_p, l_t_p, c_m, c_p); 
+    </script>
+    {% endfor %}
+
+<hr>
+
+<!-- print advanced primer settings -->
+
+<script>
+    function change_id_name(item_id)
+    {
+    var id_item = String(item_id);
+
+    var id_item_checkbox = id_item + "checkbox";
+    var id_item_range = id_item + "range";
+    var id_item_span = id_item + "span";
+
+    document.getElementById("id_checkbox").id = id_item_checkbox;
+    document.getElementById("id_range").id = id_item_range;
+    document.getElementById("id_span").id = id_item_span;
+
+    document.getElementById(id_item_checkbox).name = id_item_checkbox;
+    document.getElementById(id_item_range).name = id_item_range;
+    document.getElementById(id_item_span).name = id_item_span;
+
+    }
+
+    function show_value(new_value, id)
+    {
+        span_id = id.substring(0, id.length-5) + "span";
+        document.getElementById(span_id).innerHTML = new_value;
+    }
+
+    function global_checkbox_change(id, new_checked)
+    {
+        // change all forwards
+        if (id == "change_all_checkbox" || id == "change_forward_checkbox")
+        {    
+            elements_fw = document.getElementsByClassName("fw_checkbox");
+            
+            for (var i = 0; i < elements_fw.length; i++)
+            {
+                elements_fw[i].checked = new_checked;
+            }
+        }
+
+        // change all reverses
+        if (id == "change_all_checkbox" || id == "change_reverse_checkbox")
+        {
+            elements_rv = document.getElementsByClassName("rv_checkbox");
+            
+            for (var i = 0; i < elements_rv.length; i++)
+            {
+                elements_rv[i].checked = new_checked;
+            }
+        }
+
+        // change globals
+        if (id == "change_all_checkbox")
+        {
+            elements_g = document.getElementsByClassName("global_checkbox");
+                        
+            for (var i = 0; i < elements_g.length; i++)
+            {
+                elements_g[i].checked = new_checked;
+            }
+
+        }
+    }
+
+    function global_mismatch_change(id, new_value)
+    {
+        show_value(new_value, id)
+
+        // change all forwards
+        if (id == "change_all_range" || id == "change_forward_range")
+        {    
+            elements_fw = document.getElementsByClassName("fw_range");
+            span_fw = document.getElementsByClassName("fw_span");
+
+            for (var i = 0; i < elements_fw.length; i++)
+            {
+                elements_fw[i].value = new_value;
+                span_fw[i].innerHTML = new_value;
+            }
+        }
+
+        // change all reverses
+        if (id == "change_all_range" || id == "change_reverse_range")
+        {
+            elements_rv = document.getElementsByClassName("rv_range");
+            span_rv = document.getElementsByClassName("rv_span");
+
+            for (var i = 0; i < elements_rv.length; i++)
+            {
+                elements_rv[i].value = new_value;
+                span_rv[i].innerHTML = new_value;
+            }
+        }
+
+        // change globals
+        if (id == "change_all_range")
+        {
+            elements_g = document.getElementsByClassName("global_range");
+            span_g = document.getElementsByClassName("global_range_span");
+            
+            for (var i = 0; i < elements_g.length; i++)
+            {
+                elements_g[i].value = new_value;
+                span_g[i].innerHTML = new_value;
+            }
+
+        }
+            
+    }
+
+    // set primer settings from DB
+    function preset_values(active, mmscore, id)
+    {
+        active_id = id + "checkbox";
+        mmscore_id = id + "range";
+        span_id = id + "span";
+
+        document.getElementById(active_id).checked = active;
+        document.getElementById(mmscore_id).value = mmscore;
+        document.getElementById(span_id).innerHTML = mmscore;
+    }
+
+</script>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+    <h5>primer settings:</h5>
+    
+    <label>use all ...</label>
+    <br>
+    <label>... primers</label>&nbsp;
+    <input type="checkbox" id="change_all_checkbox" oninput="global_checkbox_change(this.id, this.checked)" onchange="global_checkbox_change(this.id, this.checked)">
+<br>
+    <label>... forward primers</label>&nbsp;
+    <input type="checkbox" id="change_forward_checkbox" class="global_checkbox" oninput="global_checkbox_change(this.id, this.checked)" onchange="global_checkbox_change(this.id, this.checked)">
+    <br>
+    <label>... reverse primers</label>&nbsp;
+    <input type="checkbox" id="change_reverse_checkbox" class="global_checkbox" oninput="global_checkbox_change(this.id, this.checked)" onchange="global_checkbox_change(this.id, this.checked)">
+    
+</div>
+
+
+<div class="col">
+    <h5>&nbsp;</h5>
+    <label>change maximum mismatch score for all ...</label>
+    <br>
+    <label>... primers</label>
+    &nbsp;
+    <input type="range" min="0" max="5" step="1" value="0" id="change_all_range" oninput="global_mismatch_change(this.id, this.value)" onchange="global_mismatch_change(this.id, this.value)">
+    &nbsp;
+    <span id="change_all_span">0</span>
+<br>
+    <label>... forward primers</label>
+    &nbsp;
+    <input type="range" min="0" max="5" step="1" value="0" id="change_forward_range" class="global_range" oninput="global_mismatch_change(this.id, this.value)" onchange="global_mismatch_change(this.id, this.value)">
+    &nbsp;
+    <span id="change_forward_span" class="global_range_span">0</span>
+<br>
+    <label>... reverse primers</label>
+    &nbsp;
+    <input type="range" min="0" max="5" step="1" value="0" id="change_reverse_range" class="global_range" oninput="global_mismatch_change(this.id, this.value)" onchange="global_mismatch_change(this.id, this.value)">
+    &nbsp;
+    <span id="change_reverse_span" class="global_range_span">0</span>
+    
+</div>
+
+    </div>
+    <br>
+    <div class="row">
+        <!-- forward primers -->
+        <div class="col">
+            <h6>forward primers:</h6>
+
+            {% for item in primer_db %}
+            {% if item.direction %}
+            <input type="checkbox" value="isactive" id="id_checkbox" class="fw_checkbox" checked>
+            
+            &nbsp;
+            {{item.sequence}}
+            &nbsp;
+  
+            <input type="range" min="0" max="5" step="1" oninput="show_value(this.value, this.id)" onchange="show_value(this.value)" id="id_range" value="0" class="fw_range">
+            &nbsp;
+            <span id="id_span" class="fw_span">0</span>
+            <br>
+            
+            <script>
+                item_active = false;
+            </script>
+            {% if item.active %}
+                <script>
+                    item_active = true;
+                </script>
+            {% endif %}
+            <script>
+            item_mm = {{item.mismatch_score}};
+            item_id = {{item.id}};
+    
+            change_id_name(item_id);
+            
+            preset_values(item_active, item_mm, item_id);        
+            </script>
+            
+            {% endif %}
+            {% endfor %}
+            
+            <br>
+            <input type="submit" value="start simulation" name="start">
+            <div style="height: 25px;"></div>
+
+        </div>
+        <!-- reverse primers -->
+        <div class="col">
+            <h6>reverse primers:</h6>
+
+            {% for item in primer_db %}
+            {% if not item.direction %}
+        <input type="checkbox" value="isactive" id="id_checkbox" class="rv_checkbox" checked>
+        
+        &nbsp;
+        {{item.sequence}}
+        &nbsp;
+            
+        <input type="range" min="0" max="5" step="1" oninput="show_value(this.value, this.id)" onchange="show_value(this.value)" id="id_range" value="0" class="rv_range">
+        &nbsp;
+        <span id="id_span" class="rv_span">0</span>
+        <br>
+
+        <script>
+            item_active = false;
+        </script>
+        {% if item.active %}
+            <script>
+                item_active = true;
+            </script>
+        {% endif %}
+        <script>
+        item_mm = {{item.mismatch_score}};
+        item_id = {{item.id}};
+
+        change_id_name(item_id);
+        
+        preset_values(item_active, item_mm, item_id);        
+        </script>
+        
+        {% endif %}
+        {% endfor %}
+            
+        </div>
+    </div>
+</div>
+
+
+
+</form>
+
+{% endblock %}
