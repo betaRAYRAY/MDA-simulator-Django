@@ -75,3 +75,5 @@ No zigzags show a product which is consisting of one primer product only.
 From left to right there could be seen: the beginning position of the product, the forward primer (mismatches are dark and fat), the start and end position of the sequence in between the forward and reverse primer, the reverse primer (mismatches are dark and fat), the end position of the product.
 A single zigzag line shows a prematurely terminated sequence.
 A pair of double zigzags shows a chimerism with a break at the zigzags position.
+
+The whole resulting sequences are printed underneath. They have no primers attached anymore.
