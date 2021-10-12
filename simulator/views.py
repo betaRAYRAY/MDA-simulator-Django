@@ -2,7 +2,7 @@ from django.shortcuts import redirect, render
 from .forms import SequenceForm, PrimerForm, SettingForm
 from .input_functions import add_sequences_to_db, add_covid_primers_to_db, add_settings_to_db, update_primer_setting
 from .calculations_functions import anneal_primers, calculate_primer_products, calculate_results, create_result_strings
-from .models import Sequence, Primer, Setting, AnnealedPrimer, PrimerProduct, ResultString
+from .models import Sequence, Primer, Setting, AnnealedPrimer, PrimerProduct, ResultString, ResultSequenceString
 
 # Create your views here.
 def show_input(request):
@@ -60,8 +60,9 @@ def show_results(request):
     primer_product = PrimerProduct.objects.all()
     sequence = Sequence.objects.all()[0].sequence
     result_string = ResultString.objects.all()
+    result_sequence = ResultSequenceString.objects.all()
     
-    return render(request, 'results.html', {'annealed_primer':annealed_primer, 'primer_product':primer_product, 'sequence':sequence, 'result_string':result_string})
+    return render(request, 'results.html', {'annealed_primer':annealed_primer, 'primer_product':primer_product, 'sequence':sequence, 'result_string':result_string, 'result_sequence':result_sequence})
 
 def show_howto(request):
     return render(request, 'howto.html', {})

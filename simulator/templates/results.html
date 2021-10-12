@@ -4,6 +4,8 @@
     <div class="container">
         <div class="row">
           <div class="col" id="canvasspace">
+            <h3>Overview</h3>
+            <br>
             <canvas id="totalcanvas" class="canvas" height="100" style="border:1px solid #000000; border-radius: 10px;">
             </canvas> 
           </div>
@@ -131,10 +133,29 @@ function draw_triangle(direction, xposition, yposition)
 </script>
 <br>
 <div class="container">
+
+<h3>Result sequence positions with primers</h3>
+<br>
 {% for item in result_string %}
 
 {{ item.product_string | safe}}
 
 {% endfor %}
 </div>
+<br>
+<div class="container">
+    <h3>Result sequences without primers</h3>
+    {% for item in result_sequence %}
+<div class="row">
+<div class="col" id="wrap">
+> product {{ forloop.counter }}
+{{ item.product_string | safe}}
+</div>
+    </div>
+    {% endfor %}
+</div>
+
+
+
+
 {% endblock %}

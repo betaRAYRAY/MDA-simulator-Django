@@ -1,5 +1,5 @@
-from .forms import AnnealedPrimerForm, PrimerProductForm, ResultProductForm, ChimericResultProductForm, ResultStringForm
-from .models import Sequence, Primer, Setting, AnnealedPrimer, PrimerProduct, ResultProduct, ChimericResultProduct, ResultString
+from .forms import AnnealedPrimerForm, PrimerProductForm, ResultProductForm, ChimericResultProductForm, ResultStringForm, ResultSequenceStringForm
+from .models import Sequence, Primer, Setting, AnnealedPrimer, PrimerProduct, ResultProduct, ChimericResultProduct, ResultString, ResultSequenceString
 from random import *
 
 def calculate_primer_products():
@@ -208,6 +208,7 @@ def chimerism_C(primer_product_1):
 
 def create_result_strings():
     ResultString.objects.all().delete()
+    ResultSequenceString.objects.all().delete()
     sequence = Sequence.objects.all()[0].sequence
     result_products = ResultProduct.objects.all()
     chimeric_result_products = ChimericResultProduct.objects.all()
@@ -267,6 +268,13 @@ def create_result_strings():
         if form.is_valid():
             form.save()    
 
+        # create result sequence \ primers for ResultSequenceString
+        result_sequence =  sequence[item.primer_product.forward_primer.end+1:item.primer_product.reverse_primer.start]
+        data = {'product_string':result_sequence}
+        form = ResultSequenceStringForm(data)
+        if form.is_valid():
+            form.save() 
+
     for item in chimeric_result_products:
         forward_primer = "<div style='display:inline; color:#0099ff'>"
         reverse_primer = "<div style='display:inline; color:#ff0000'>"
@@ -313,3 +321,12 @@ def create_result_strings():
         form = ResultStringForm(data)
         if form.is_valid():
             form.save()  
+
+        # create result sequence \ primers for ResultSequenceString
+        result_sequence1 =  sequence[item.primer_product_1.forward_primer.end+1:item.stop_1]
+        result_sequence2 =  sequence[item.stop_2+1:item.primer_product_2.reverse_primer.start]
+        result_sequence = result_sequence1 + result_sequence2
+        data = {'product_string':result_sequence}
+        form = ResultSequenceStringForm(data)
+        if form.is_valid():
+            form.save() 

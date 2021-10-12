@@ -1,5 +1,5 @@
 from django.forms import ModelForm
-from .models import Sequence, Primer, Setting, AnnealedPrimer, PrimerProduct, ResultProduct, ChimericResultProduct, ResultString
+from .models import Sequence, Primer, Setting, AnnealedPrimer, PrimerProduct, ResultProduct, ChimericResultProduct, ResultString, ResultSequenceString
 
 class SequenceForm(ModelForm):
     class Meta:
@@ -41,4 +41,8 @@ class ResultStringForm(ModelForm):
         model = ResultString
         fields = '__all__'
 
+class ResultSequenceStringForm(ModelForm):
+    class Meta:
+        model = ResultSequenceString
+        fields = '__all__'
         

@@ -59,3 +59,6 @@ class ChimericResultProduct(models.Model):
 
 class ResultString(models.Model):
     product_string = models.CharField(max_length=1000)
+
+class ResultSequenceString(models.Model):
+    product_string = models.CharField(max_length=100000)
