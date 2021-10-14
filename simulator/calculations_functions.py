@@ -269,7 +269,12 @@ def create_result_strings():
             form.save()    
 
         # create result sequence \ primers for ResultSequenceString
-        result_sequence =  sequence[item.primer_product.forward_primer.end+1:item.primer_product.reverse_primer.start]
+        if (item.stop == -1):   # whole sequence
+            result_sequence =  sequence[item.primer_product.forward_primer.end+1:item.primer_product.reverse_primer.start]
+        elif (item.direction):  # stopped sequence, forward
+            result_sequence =  sequence[item.primer_product.forward_primer.end+1:item.stop]
+        else:                   # stopped sequence, backward
+            result_sequence =  sequence[item.stop+1:item.primer_product.reverse_primer.start]   
         data = {'product_string':result_sequence}
         form = ResultSequenceStringForm(data)
         if form.is_valid():
